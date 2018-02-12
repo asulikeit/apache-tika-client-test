@@ -19,35 +19,42 @@ import org.xml.sax.SAXException;
  * 
  * @author Daniel
  *
- * References:
- * https://stackoverflow.com/questions/32354209/apache-tika-extract-scanned-pdf-files
- * https://www.woodmark.de/blog/parsing-text-within-image-files-or-embedded-images-pdfs-using-apache-tika-ocr/
+ * Reference:
+ * https://stackoverflow.com/questions/41985163/unable-to-extract-content-directly-from-scanned-pdf-using-apache-tika-but-work
+ * https://digi.bib.uni-mannheim.de/tesseract/ - windows
  */
+public class TikaClientTestImage {
 
-public class TikaClientTest {
-
-	private static String filename = "ORG_english_contract.pdf";
-//	private static String filename = "SCAN_english_contract.pdf";
+	// private static String filename = "ORG_english_contract.pdf";
+	private static String filename = "SCAN_english_contract.pdf";
+//	private static String tesseract = "C:\\Program Files (x86)\\Tesseract-OCR";
+	private static String tesseract = "D:\\Program\\tesseract-Win64";
+	private static String tessdata = "C:\\Program Files (x86)\\Tesseract-OCR\\tessdata";
 
 	public static void main(String[] args) throws IOException, SAXException, TikaException {
 		FileInputStream stream = getFilePath();
 		BodyContentHandler handler = new BodyContentHandler(Integer.MAX_VALUE);
 
 		Parser parser = new AutoDetectParser();
-		TesseractOCRConfig config = new TesseractOCRConfig();
-
+		
+		TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
+		ocrConfig.setTesseractPath(tesseract);
+		ocrConfig.setTessdataPath(tessdata);
+		ocrConfig.setMaxFileSizeToOcr(Integer.MAX_VALUE);
+		
 		PDFParserConfig pdfConfig = new PDFParserConfig();
 		pdfConfig.setExtractInlineImages(true);
+		pdfConfig.setExtractUniqueInlineImagesOnly(false);
 
 		ParseContext parseContext = new ParseContext();
-		parseContext.set(TesseractOCRConfig.class, config);
+		parseContext.set(TesseractOCRConfig.class, ocrConfig);
 		parseContext.set(PDFParserConfig.class, pdfConfig);
 		// need to add this to make sure recursive parsing happens!
 		parseContext.set(Parser.class, parser);
 
 		Metadata metadata = new Metadata();
 		parser.parse(stream, handler, metadata, parseContext);
-		System.out.println(metadata);
+//		System.out.println(metadata);
 		String content = handler.toString();
 		System.out.println("===============");
 		System.out.println(content);
@@ -60,7 +67,7 @@ public class TikaClientTest {
 	}
 
 	private static FileInputStream getFilePath() throws FileNotFoundException {
-		ClassLoader classLoader = TikaClientTest.class.getClassLoader();
+		ClassLoader classLoader = TikaClientTestImage.class.getClassLoader();
 		File file = new File(classLoader.getResource(filename).getFile());
 		return new FileInputStream(file);
 	}
